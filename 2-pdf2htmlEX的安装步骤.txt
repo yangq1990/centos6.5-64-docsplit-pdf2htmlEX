@@ -170,11 +170,11 @@ export LD_LIBRARY_PATH
 source /etc/profile
 
 
-
-
-如果定时任务出现
+如果crontab定时任务出现
 sh java commond not found 
-ln -s xxx/bin   /usr/bin/java
+先检查是否配置java环境变量 参考http://www.cnblogs.com/zhoulf/archive/2013/02/04/2891608.html
+然后软链java bin的目录到/usr/bin/java  
+例如： ln -s /usr/local/jdk/java/bin   /usr/bin/java
 
 pdf2htmlEX: error while loading shared libraries: libfontforge.so.2: cannot open shared object file: No such file or directory
 cd /usr/local/include/poppler/libpoppler.so.45 /usr/lib
