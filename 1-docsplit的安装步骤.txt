@@ -1,0 +1,137 @@
+﻿安装环境 centos6.5  64位
+
+
+1，源代码安装autoconf ,yum安装的是2.63 too old, 至少要2.68
+
+
+2，yum install ruby java gcc gcc-c++  libjpeg libjpeg-devel libpng libpng-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel libidn libidn-devel openssl openssl-devel openldap openldap-devel nss_ldap openldap-clients openldap-servers fontforge  fonts-chinese  -y
+
+
+3，yum install rdoc ri zlib zlib-devel  automake libtool libpng12-dev libjpeg62-dev libtiff4-dev zlib1g-dev -y 
+
+
+4，安装rubygems
+##########################################################
+tar axvf ./rubygems-1.8.15.tgz
+cd ./rubygems-1.8.15 & ruby ./setup.rb
+##########################################################
+
+
+5，gem install docsplit -v 0.6.4   #安装docsplit指定的版本 最新的版本是0.7.5， 0.7.0之后docsplit更倾向于使用libreoffice
+
+
+6, 源代码安装GraphicsMagick 1.3.20
+###########################################################
+tar jxf GraphicsMagick-1.3.20.tar.bz2 
+ ./configure
+ make 
+ make install
+ 
+输入gm ，验证是否成功安装
+###########################################################
+
+ 
+7, 源代码安装popoler-utils, 不要用yum安装，因为yum安装poppler-utils会安装fontforge和poppler,而pdf2htmlEX对这两个的版本要求比较苛刻
+rpm -ivh poppler-0.12.4-3.el6_0.1.src.rpm
+
+
+8，安装poppler-data
+###########################################################
+tar -zxvf poppler-data-0.4.6.tar.gz 
+cd poppler-data-0.4.6
+直接 make install
+###########################################################
+
+
+9，安装poppler 因为pdf2htmlEX对poppler的要求版本大于0.20.0， 因此选择0.25.0安装
+###########################################################
+xz -d poppler-0.25.0.tar.xz
+tar -xvf  poppler-0.25.0.tar
+cd poppler-0.25.0
+
+./configure --enable-xpdf-headers  ###for pdf2htmlEX 一定要带上参数
+
+如果出现 Package requirements (fontconfig >= 2.0.0) were not met:No package 'fontconfig' found
+则需要安装fontconfig,且版本不能低于2.0.0
+wget http://www.freedesktop.org/software/fontconfig/release/fontconfig-2.11.1.tar.bz2
+bzip2 -d fontconfig-2.11.1.tar.bz2
+tar -xvf fontconfig-2.11.1.tar 
+cd fontconfig-2.11.1
+./configure --enable-libxml2   #带上参数--enable-libxml2
+make && make install
+
+find / -name pkgconfig
+把找到的pkgconfig的路径添加到PKG_CONFIG_PATH，export , 重新编译   参考https://github.com/coolwanglu/pdf2htmlEX/issues/44
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig
+
+make && make install
+如果没有报错  输入 pdfinfo
+如果有输出信息，表明popplerp安装成功
+###########################################################
+
+
+10， 源代码安装openoffice3.4.1 同样不要用yum安装
+###########################################################
+先删除系统原有的openoffice 包
+rpm -e `rpm -qa |grep openoffice` `rpm -qa |grep ooobasis` 
+
+检查8100端口是否被占用，如果有，找到进程id, kill掉
+ps -ef | grep 8100
+kill 进程id
+
+安装openoffice及其sdk
+tar -zxvf Apache_OpenOffice_incubating_3.4.1_Linux_x86-64_install-rpm_en-US.tar.gz
+tar -zxvf Apache_OpenOffice_incubating-SDK_3.4.1_Linux_x86-64_install-rpm_en-US.tar.gz   #openoffice sdk
+
+cd en-US/RPMS/
+rpm -ivh *.rpm 
+cd desktop-integration/
+rpm -ivh openoffice.org3.4-redhat-menus-3.4-9593.noarch.rpm
+
+#启动openoffice服务，可以写到开机启动里
+cd openoffice.org3/program/
+soffice -headless -accept="socket,host=127.0.0.1,port=8100;urp;"-nofirststartwizard &
+
+把openoffice的地址写入OFFICE_PATH  Ruby搜索要用到
+export OFFICE_PATH=/opt/openoffice.org3
+d
+加入链接    Ruby搜索要用到
+ln -s /opt/openoffice.org3/ /usr/lib/openoffice
+###########################################################
+
+vi /etc/sysconfig/i18n修改成：
+LANG="zh_CN.UTF-8" 
+
+为系统增加中文支持，防止转中文文档出现的乱码
+1、先从你本机 C:\Windows\Fonts 拷贝或者网络上下载你想要安装的字体文件（*.ttf文件）到/usr/share/fonts/chinese/TrueType 目录下（如果系统中没有此目录，则自行mkdir创建，亦可重命名为自己喜欢的文件夹名）
+2、修改字体文件的权限，使root用户以外的用户也可以使用
+# cd /usr/share/fonts/chinese/TrueType
+# chmod 755 *.ttf
+3、建立字体缓存
+# mkfontscale （如果提示 mkfontscale: command not found，需自行安装 # yum install mkfontscale ）
+# mkfontdir 
+# fc-cache -fv （如果提示 fc-cache: command not found，则需要安装# yum install fontconfig ）
+4、重启计算机
+# reboot
+
+
+
+11, 可选，安装额外支持包，为OCR文件辨认
+###########################################################
+tar xvzf leptonica-1.68.tar.gz
+cd leptonica-1.68
+./configure
+make
+make install
+###########################################################
+
+
+12，可选，安装测试支持包
+###########################################################
+tar zxf tesseract-ocr-3.02.02.tar.gz 
+./autogen.sh 
+./configure 
+make 
+make install 
+###########################################################
+
